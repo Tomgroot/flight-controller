@@ -1,0 +1,8 @@
+- [STM32F401RCT6](https://www.aliexpress.com/item/1005007384581082.html?spm=a2g0o.order_list.order_list_main.209.374179d2nYG5R3)
+- [RadioMaster RP1 V2 ExpressLRS 2,4GHz nano-ontvanger](https://www.aliexpress.com/item/1005009420568795.html?spm=a2g0o.order_list.order_list_main.215.374179d2nYG5R3)
+- [A pair 9047](https://www.aliexpress.com/item/1005008813878260.html?spm=a2g0o.order_list.order_list_main.164.374179d2nYG5R3)
+- [MATEK PDB-XT60 Distribution Board BEC 5V](https://www.aliexpress.com/item/1005008734599989.html?spm=a2g0o.order_list.order_list_main.169.374179d2nYG5R3)
+- [3S 5000 30C XT60, CHINA](https://www.aliexpress.com/item/1005006369417873.html?spm=a2g0o.order_list.order_list_main.159.374179d2nYG5R3)
+- [SUNNYSKY X2212Ⅱ 1PC X2212 980KV](https://www.aliexpress.com/item/1005004732132718.html?spm=a2g0o.order_list.order_list_main.332.374179d2nYG5R3)
+- [Mark4 V2 10 Inch](https://www.aliexpress.com/item/1005008488668833.html?spm=a2g0o.order_list.order_list_main.362.374179d2nYG5R3)
+- [1 STKS GY-521 MPU-6050 MPU6050 Module 3 Axis analoge gyrosensoren + 3 Axis Accelerometer Module](https://nl.aliexpress.com/item/1005008639359144.html?spm=a2g0o.order_list.order_list_main.382.374179d2nYG5R3&gatewayAdapt=glo2nld)

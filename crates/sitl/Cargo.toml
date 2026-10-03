@@ -1,0 +1,11 @@
+[package]
+name = "sitl"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+fc-core.workspace = true
+sim.workspace = true
+glam.workspace = true
+rerun.workspace = true
+clap.workspace = true
