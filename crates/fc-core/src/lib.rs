@@ -20,12 +20,33 @@ pub const RC_MAX: u16 = 1811;
 #[derive(Clone, Copy, Debug)]
 pub struct RcChannels(pub [u16; 16]);
 
+pub enum Channel {
+    Roll,
+    Pitch,
+    Throttle,
+    Yaw,
+    Arm,
+}
+
+impl core::ops::Index<Channel> for RcChannels {
+    type Output = u16;
+    fn index(&self, c: Channel) -> &u16 {
+        &self.0[c as usize]
+    }
+}
+
+impl core::ops::IndexMut<Channel> for RcChannels {
+    fn index_mut(&mut self, c: Channel) -> &mut u16 {
+        &mut self.0[c as usize]
+    }
+}
+
 impl Default for RcChannels {
     fn default() -> Self {
-        let mut ch = [RC_MID; 16];
-        ch[2] = RC_MIN;
-        ch[4] = RC_MIN;
-        RcChannels(ch)
+        let mut ch = RcChannels([RC_MID; 16]);
+        ch[Channel::Throttle] = RC_MIN;
+        ch[Channel::Arm] = RC_MIN;
+        ch
     }
 }
 

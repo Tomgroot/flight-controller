@@ -9,3 +9,4 @@ sim.workspace = true
 glam.workspace = true
 rerun.workspace = true
 clap.workspace = true
+crossterm.workspace = true

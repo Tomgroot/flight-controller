@@ -4,6 +4,8 @@ use sim::{Imu, ImuParams, Quad, QuadParams, RcSource};
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
+mod keyboard;
+
 const DT: f32 = 0.001;
 const LOG_EVERY: u64 = 10;
 
@@ -19,6 +21,9 @@ struct Args {
     /// Write a .rrd file instead of spawning the Rerun viewer.
     #[arg(long)]
     save: Option<PathBuf>,
+    // Whether to use the keyboard as an RC source.
+    #[arg(long)]
+    keyboard: bool,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -34,6 +39,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut imu = Imu::new(ImuParams::default(), 42);
     let rc_source = RcSource;
     let mut fc = FlightController::new();
+    let keyboard = if args.keyboard {
+        Some(keyboard::KeyboardRc::spawn()?)
+    } else {
+        None
+    };
 
     rec.log_static("world", &rerun::ViewCoordinates::RIGHT_HAND_Z_UP())?;
     rec.log_static(
@@ -45,12 +55,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let steps = (args.duration / DT) as u64;
     for step in 0..steps {
         let t = step as f32 * DT;
-        let rc = rc_source.sample(t);
+        let rc = match &keyboard {
+            Some(keyboard) => keyboard.sample(),
+            None => rc_source.sample(t),
+        };
+
         let imu_sample = imu.sample(&quad);
         let motors = fc.update(&imu_sample, &rc, DT);
         quad.step(DT, &motors);
 
-        if args.realtime {
+        let realtime = args.realtime || args.keyboard;
+        if realtime {
             let target = Duration::from_secs_f32(t + DT);
             if let Some(wait) = target.checked_sub(start.elapsed()) {
                 std::thread::sleep(wait);
@@ -84,10 +99,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             )?;
         }
         for (i, value) in motors.0.iter().enumerate() {
-            rec.log(format!("motors/{i}"), &rerun::Scalars::single(*value as f64))?;
+            rec.log(
+                format!("motors/{i}"),
+                &rerun::Scalars::single(*value as f64),
+            )?;
         }
-        for (i, name) in ["roll", "pitch", "throttle", "yaw", "arm"].iter().enumerate() {
-            rec.log(format!("rc/{name}"), &rerun::Scalars::single(rc.0[i] as f64))?;
+        for (i, name) in ["throttle", "yaw"].iter().enumerate() {
+            rec.log(
+                format!("rc/{name}"),
+                &rerun::Scalars::single(rc.0[i] as f64),
+            )?;
         }
     }
 
