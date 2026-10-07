@@ -3,13 +3,15 @@
 //! Frames: body is FLU (x forward, y left, z up).
 #![no_std]
 
+use glam::Vec3;
+
 /// One MPU-6050 sample in the body frame.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct ImuSample {
     /// Angular rate in rad/s.
-    pub gyro: [f32; 3],
+    pub gyro: Vec3,
     /// Specific force in m/s² (reads +9.81 on z when level and at rest).
-    pub accel: [f32; 3],
+    pub accel: Vec3,
 }
 
 pub const RC_MIN: u16 = 172;
@@ -55,18 +57,48 @@ impl Default for RcChannels {
 #[derive(Clone, Copy, Debug, Default)]
 pub struct MotorOutputs(pub [f32; 4]);
 
+enum Motor {
+    RearRight,
+    FrontRight,
+    RearLeft,
+    FrontLeft,
+}
+
 pub struct FlightController {
-    // TODO: estimator state, PID state, armed flag, ...
+    armed: bool,
+    attitude: f32,
 }
 
 impl FlightController {
     pub fn new() -> Self {
-        FlightController {}
+        FlightController {
+            armed: false,
+            attitude: 0.0,
+        }
+    }
+
+    fn update_arming(&mut self, rc: &RcChannels) {
+        if rc[Channel::Arm] <= RC_MID {
+            self.armed = false;
+            return;
+        }
+        if self.armed {
+            return;
+        }
+        self.armed = rc[Channel::Throttle] <= RC_MIN + 50;
     }
 
     pub fn update(&mut self, imu: &ImuSample, rc: &RcChannels, dt: f32) -> MotorOutputs {
-        let _ = (imu, rc, dt);
-        // TODO: arming logic (rc.0[4])
+        self.update_arming(rc);
+        if !self.armed {
+            return MotorOutputs::default();
+        }
+
+        let delta = imu.accel.z - 9.81;
+        // dt 0.001 = 1ms, delta m per second, so 10m/s means 10*0.001=0.01m
+        let distance = dt * delta;
+        self.attitude += distance;
+
         // TODO: attitude estimation (complementary / Mahony filter on imu)
         // TODO: angle -> rate setpoints from sticks
         // TODO: rate PID

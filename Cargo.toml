@@ -5,7 +5,7 @@ members = ["crates/*"]
 [workspace.dependencies]
 fc-core = { path = "crates/fc-core" }
 sim = { path = "crates/sim" }
-glam = "0.30"
+glam = { version = "0.30", default-features = false, features = ["libm"] }
 rerun = "0.38"
 crossterm = "0.28"
 clap = { version = "4.6", features = ["derive"] }

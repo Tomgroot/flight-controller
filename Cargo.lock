@@ -3291,6 +3291,9 @@ checksum = "caf1079563223d5d59d83c85886a56e586cfd5c1a26292e971a0fa266531ac5a"
 [[package]]
 name = "fc-core"
 version = "0.1.0"
+dependencies = [
+ "glam",
+]
 
 [[package]]
 name = "fdeflate"
@@ -3707,6 +3710,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "19fc433e8437a212d1b6f1e68c7824af3aed907da60afa994e7f542d18d12aa9"
 dependencies = [
  "bytemuck",
+ "libm",
  "serde_core",
 ]
 
