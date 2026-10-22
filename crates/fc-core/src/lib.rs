@@ -3,7 +3,7 @@
 //! Frames: body is FLU (x forward, y left, z up).
 #![no_std]
 
-use glam::Vec3;
+use glam::{Vec2, Vec3};
 
 /// One MPU-6050 sample in the body frame.
 #[derive(Clone, Copy, Debug, Default)]
@@ -66,14 +66,14 @@ enum Motor {
 
 pub struct FlightController {
     armed: bool,
-    attitude: f32,
+    attitude: Vec2,
 }
 
 impl FlightController {
     pub fn new() -> Self {
         FlightController {
             armed: false,
-            attitude: 0.0,
+            attitude: Vec2::default(),
         }
     }
 
@@ -94,11 +94,15 @@ impl FlightController {
             return MotorOutputs::default();
         }
 
-        let delta = imu.accel.z - 9.81;
-        // dt 0.001 = 1ms, delta m per second, so 10m/s means 10*0.001=0.01m
-        let distance = dt * delta;
-        self.attitude += distance;
-
+        // Trust gyro by 98%
+        const ALPHA: f32 = 0.98;
+        // Roll (x) angle, pitch (y) angle
+        let accel = Vec2::new(
+            libm::atan2f(imu.accel.y, imu.accel.z),
+            libm::atan2f(-imu.accel.x, imu.accel.z),
+        );
+        let gyro = self.attitude + imu.gyro.truncate() * dt;
+        self.attitude = gyro * ALPHA + accel * (1.0 - ALPHA);
         // TODO: attitude estimation (complementary / Mahony filter on imu)
         // TODO: angle -> rate setpoints from sticks
         // TODO: rate PID

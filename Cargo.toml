@@ -8,4 +8,5 @@ sim = { path = "crates/sim" }
 glam = { version = "0.30", default-features = false, features = ["libm"] }
 rerun = "0.38"
 crossterm = "0.28"
+libm = "0.2"
 clap = { version = "4.6", features = ["derive"] }
