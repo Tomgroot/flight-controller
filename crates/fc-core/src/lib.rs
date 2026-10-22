@@ -30,6 +30,17 @@ pub enum Channel {
     Arm,
 }
 
+impl RcChannels {
+    pub fn stick(&self, c: Channel) -> f32 {
+        ((self[c] as f32 - RC_MID as f32) / (RC_MAX - RC_MID) as f32).clamp(-1.0, 1.0)
+    }
+
+    pub fn throttle(&self) -> f32 {
+        ((self[Channel::Throttle] as f32 - RC_MIN as f32) / (RC_MAX - RC_MID) as f32)
+            .clamp(0.0, 1.0)
+    }
+}
+
 impl core::ops::Index<Channel> for RcChannels {
     type Output = u16;
     fn index(&self, c: Channel) -> &u16 {
@@ -89,21 +100,27 @@ impl FlightController {
     }
 
     pub fn update(&mut self, imu: &ImuSample, rc: &RcChannels, dt: f32) -> MotorOutputs {
+        // Trust gyro by 98%
+        const ALPHA: f32 = 0.98;
+        // Roll (φ, x-axis) angle, pitch (θ, y-axis) angle
+        // ax = −g·sinθ
+        // ay =  g·cosθ·sinφ
+        // az =  g·cosθ·cosφ
+        let accel = Vec2::new(
+            libm::atan2f(imu.accel.y, imu.accel.z),
+            libm::atan2f(
+                -imu.accel.x,
+                libm::sqrtf(imu.accel.y * imu.accel.y + imu.accel.z * imu.accel.z),
+            ),
+        );
+        let gyro = self.attitude + imu.gyro.truncate() * dt;
+        self.attitude = gyro * ALPHA + accel * (1.0 - ALPHA);
+
         self.update_arming(rc);
         if !self.armed {
             return MotorOutputs::default();
         }
 
-        // Trust gyro by 98%
-        const ALPHA: f32 = 0.98;
-        // Roll (x) angle, pitch (y) angle
-        let accel = Vec2::new(
-            libm::atan2f(imu.accel.y, imu.accel.z),
-            libm::atan2f(-imu.accel.x, imu.accel.z),
-        );
-        let gyro = self.attitude + imu.gyro.truncate() * dt;
-        self.attitude = gyro * ALPHA + accel * (1.0 - ALPHA);
-        // TODO: attitude estimation (complementary / Mahony filter on imu)
         // TODO: angle -> rate setpoints from sticks
         // TODO: rate PID
         // TODO: mixer -> MotorOutputs
