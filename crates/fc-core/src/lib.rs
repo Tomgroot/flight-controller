@@ -17,6 +17,11 @@ pub struct ImuSample {
 pub const RC_MIN: u16 = 172;
 pub const RC_MID: u16 = 992;
 pub const RC_MAX: u16 = 1811;
+const MAX_ANGLE: f32 = 0.52;
+// 1 / 4 = 0.25s to close the gap.
+const ANGLE_GAIN: f32 = 4.0;
+// 200 degrees per second.
+const MAX_YAW_RATE: f32 = 3.5;
 
 /// CRSF channels (172..=1811). AETR order: 0 roll, 1 pitch, 2 throttle, 3 yaw, 4 arm switch.
 #[derive(Clone, Copy, Debug)]
@@ -121,7 +126,12 @@ impl FlightController {
             return MotorOutputs::default();
         }
 
-        // TODO: angle -> rate setpoints from sticks
+        let angle_setpoint =
+            Vec2::new(rc.stick(Channel::Roll), rc.stick(Channel::Pitch)) * MAX_ANGLE;
+        let rotate_xy = (angle_setpoint - self.attitude) * ANGLE_GAIN;
+        // rad/s
+        let rotate_setpoint = rotate_xy.extend(rc.stick(Channel::Yaw) * MAX_YAW_RATE);
+
         // TODO: rate PID
         // TODO: mixer -> MotorOutputs
         MotorOutputs::default()
