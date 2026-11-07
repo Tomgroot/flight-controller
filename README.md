@@ -28,9 +28,21 @@ crates/
 cargo run -p sitl                         # simulate 10 s, opens the Rerun viewer
 cargo run -p sitl -- --realtime           # run at wall-clock speed
 cargo run -p sitl -- --save out.rrd       # headless, open later with `rerun out.rrd`
+cargo run -p sitl -- --keyboard --duration 300   # fly manually, in realtime
 cargo test                                # sim physics tests
 cargo build -p fc-core --target thumbv7em-none-eabihf   # check fc-core stays no_std
 ```
+
+### Keyboard controls
+
+`--keyboard` needs a terminal with the kitty keyboard protocol (Ghostty, kitty, WezTerm, or iTerm2 with "report keys using CSI u"). macOS Terminal.app is not supported.
+
+| Key | Action |
+| --- | --- |
+| `w` / `s` | throttle up / down (springs back to mid stick) |
+| `a` / `d` | yaw |
+
+The arm switch is always on. Tap `s` once to arm, since arming needs low throttle. Roll and pitch have no keys yet.
 
 Without a local toolchain you can use Docker:
 

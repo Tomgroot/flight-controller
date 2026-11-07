@@ -77,13 +77,6 @@ const KP: Vec3 = Vec3::new(0.05, 0.05, 0.1);
 const KI: Vec3 = Vec3::new(0.0, 0.0, 0.0);
 const KD: Vec3 = Vec3::new(0.0, 0.0, 0.0);
 
-enum Motor {
-    RearRight,
-    FrontRight,
-    RearLeft,
-    FrontLeft,
-}
-
 pub struct FlightController {
     armed: bool,
     attitude: Vec2,

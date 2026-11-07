@@ -48,8 +48,8 @@ impl Imu {
         let gyro = quad.angular_velocity + p.gyro_bias + self.noise() * p.gyro_noise;
         let accel = quad.specific_force() + p.accel_bias + self.noise() * p.accel_noise;
         ImuSample {
-            gyro: gyro.clamp(Vec3::splat(-p.gyro_range), Vec3::splat(p.gyro_range)).to_array(),
-            accel: accel.clamp(Vec3::splat(-p.accel_range), Vec3::splat(p.accel_range)).to_array(),
+            gyro: gyro.clamp(Vec3::splat(-p.gyro_range), Vec3::splat(p.gyro_range)),
+            accel: accel.clamp(Vec3::splat(-p.accel_range), Vec3::splat(p.accel_range)),
         }
     }
 
