@@ -41,7 +41,7 @@ impl RcChannels {
     }
 
     pub fn throttle(&self) -> f32 {
-        ((self[Channel::Throttle] as f32 - RC_MIN as f32) / (RC_MAX - RC_MID) as f32)
+        ((self[Channel::Throttle] as f32 - RC_MIN as f32) / (RC_MAX - RC_MIN) as f32)
             .clamp(0.0, 1.0)
     }
 }
@@ -73,6 +73,10 @@ impl Default for RcChannels {
 #[derive(Clone, Copy, Debug, Default)]
 pub struct MotorOutputs(pub [f32; 4]);
 
+const KP: Vec3 = Vec3::new(0.05, 0.05, 0.1);
+const KI: Vec3 = Vec3::new(0.0, 0.0, 0.0);
+const KD: Vec3 = Vec3::new(0.0, 0.0, 0.0);
+
 enum Motor {
     RearRight,
     FrontRight,
@@ -83,6 +87,8 @@ enum Motor {
 pub struct FlightController {
     armed: bool,
     attitude: Vec2,
+    integral: Vec3,
+    prev_gyro: Vec3,
 }
 
 impl FlightController {
@@ -90,6 +96,8 @@ impl FlightController {
         FlightController {
             armed: false,
             attitude: Vec2::default(),
+            integral: Vec3::default(),
+            prev_gyro: Vec3::default(),
         }
     }
 
@@ -121,20 +129,35 @@ impl FlightController {
         let gyro = self.attitude + imu.gyro.truncate() * dt;
         self.attitude = gyro * ALPHA + accel * (1.0 - ALPHA);
 
-        self.update_arming(rc);
-        if !self.armed {
-            return MotorOutputs::default();
-        }
-
         let angle_setpoint =
             Vec2::new(rc.stick(Channel::Roll), rc.stick(Channel::Pitch)) * MAX_ANGLE;
         let rotate_xy = (angle_setpoint - self.attitude) * ANGLE_GAIN;
         // rad/s
-        let rotate_setpoint = rotate_xy.extend(rc.stick(Channel::Yaw) * MAX_YAW_RATE);
+        let rotate_setpoint = rotate_xy.extend(-rc.stick(Channel::Yaw) * MAX_YAW_RATE);
+        // P is proportional error correction, I is integral over time correction and D is derivative correction to not overshoot
+        let error = rotate_setpoint - imu.gyro;
+        self.integral += error * dt;
+        let derivative = -(imu.gyro - self.prev_gyro) / dt;
+        self.prev_gyro = imu.gyro;
 
-        // TODO: rate PID
-        // TODO: mixer -> MotorOutputs
-        MotorOutputs::default()
+        self.update_arming(rc);
+        if !self.armed {
+            self.integral = Vec3::ZERO;
+            return MotorOutputs::default();
+        }
+
+        let output = KP * error + KI * self.integral + KD * derivative;
+
+        let t = rc.throttle();
+        MotorOutputs(
+            [
+                t - output.x + output.y + output.z, // RearRight (CW)
+                t - output.x - output.y - output.z, // FrontRight (CCW)
+                t + output.x + output.y - output.z, // RearLeft (CCW)
+                t + output.x - output.y + output.z, // FrontLeft (CW)
+            ]
+            .map(|m| m.clamp(0.0, 1.0)),
+        )
     }
 }
 
